@@ -95,11 +95,11 @@ def one_hot_encode(df : pd.DataFrame, cols : list[str]) -> pd.DataFrame:
         df = df.drop(columns = [col])
     return df
 
-def remove_outliers(y : np.ndarray, X : np.ndarray, df : pd.DataFrame, 
+def remove_outliers(y : np.ndarray, X : np.ndarray, 
                     percent : float = 0.02) -> list[np.ndarray] :
     '''
-    Remove rows in 1D y that have outliers values in corresponding columns col of dataframe df,
-    and remove related rows in X
+    Remove rows in 1D array y that have outliers values and remove related rows in X
+    Returns list of input arrays y and X without the outliers
     '''
     rows_to_remove = []
     lower_bound = np.quantile(y, percent)
@@ -114,9 +114,10 @@ def remove_outliers(y : np.ndarray, X : np.ndarray, df : pd.DataFrame,
     return [y, X]
 
 def scale_data(array_train : np.ndarray, array_test : np.ndarray, cols : list[str],
-               df : pd.DataFrame, method : str) -> list[np.ndarray] :
+               df : pd.DataFrame, method : str) -> list :
     '''
     Scale data with scaler in columns of array corresponding to columns col of dataframe df
+    Returns list of scaled input arrays and last scaler
     '''
     # Convert arrays to float
     array_train = array_train.astype(np.float64, copy = False)
@@ -129,10 +130,10 @@ def scale_data(array_train : np.ndarray, array_test : np.ndarray, cols : list[st
         if col in df.columns:
             array_cols.append(df.columns.get_loc(col))
 
+    # Create Scaler
+    scaler = MinMaxScaler() if method == "minmax" else StandardScaler()
     # Fit scaler on train and transform both train and test
     for col in array_cols:
-        # Create Scaler
-        scaler = MinMaxScaler() if method == "minmax" else StandardScaler()
         # Reshape arrays to 2 dimensions arrays
         array_train_2d = array_train[:,col].reshape(-1,1)
         array_test_2d = array_test[:,col].reshape(-1,1)
@@ -142,4 +143,4 @@ def scale_data(array_train : np.ndarray, array_test : np.ndarray, cols : list[st
         array_train[:,col] = scaler.transform(array_train_2d)[:,0]
         array_test[:,col] = scaler.transform(array_test_2d)[:,0]
 
-    return [array_train, array_test]
+    return [array_train, array_test, scaler]

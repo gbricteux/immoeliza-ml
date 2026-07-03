@@ -42,7 +42,9 @@ def main():
             df[col] = pd.Categorical(df[col])
 
     # Assign int type to int columns
-    integer_cols = ['date_of_construction', 'livable_surface', 'number_of_bedrooms', 'number_of_bathrooms', 'terrace', 'garage', 'land_surface', 'energy_consumption', 'garden']
+    integer_cols = ['date_of_construction', 'livable_surface', 'number_of_bedrooms',
+                    'number_of_bathrooms', 'terrace', 'garage', 'land_surface',
+                    'energy_consumption', 'garden']
     for col in integer_cols:
         df[col] = df[col].astype(float).astype('Int64')
 
@@ -58,27 +60,38 @@ def main():
                               'property_condition', 'availability', 'province']
     df = preprocess.one_hot_encode(df, cols_to_one_hot_encode)
 
-    # Split data into training and test sets
+    # Split data into training and test sets.
     X = df.drop(columns=['price'])
     y = df[['price']]
-    X_train, X_test, y_train, y_test = model.split_data(X, y)
+    X_train, X_test, y_train, y_test = model.split_data(X, y) # returns ndarrays
 
     # Remove outliers on y_train data and use mask to crop X_train
-    y_train, X_train = preprocess.remove_outliers(y_train, X_train, df, 0.02)
+    y_train, X_train = preprocess.remove_outliers(y_train, X_train, 0.02)
 
     # Scale numerical values
     cols_to_scale = ['longitude', 'latitude', 'date_of_construction', 'livable_surface',
                      'number_of_bedrooms', 'number_of_bathrooms', 'terrace', 'garage',
                      'land_surface', 'energy_consumption', 'garden']
-    X_train, X_test = preprocess.scale_data(X_train, X_test, cols_to_scale, X, "standard")
-    y_train, y_test = preprocess.scale_data(y_train, y_test, ['price'], y, "standard")
+    X_train, X_test, x_scaler = preprocess.scale_data(X_train, X_test, cols_to_scale, X, "standard")
+    y_train, y_test, y_scaler = preprocess.scale_data(y_train, y_test, ['price'], y, "standard")
     
-    # Create and train model
-    regressor = model.linear_regression(X_train, y_train)
-    print(f"Linear regression : R² score on train data = {regressor.score(X_train, y_train):.3f}")
-
-    # Test model on test data
-    print(f"Linear regression : R² score on test data = {regressor.score(X_test, y_test):.3f}")
+    # Create and train machine learning models
+    linear_regressor = model.linear_regression(X_train, y_train)
+    decision_tree_regressor = model.decision_tree_regression(X_train, y_train, 
+                                                             X_test, y_test, test_depth = True)
+    random_forest_regressor = model.random_forest_regression(X_train, y_train, 
+                                                             X_test, y_test, test_ntrees = True)
+    xgboost_regressor = model.xgboost_regression(X_train, y_train, 
+                                                 X_test, y_test, test_learning_rate = True)
+    
+    # Test and compare models on test data
+    models = {
+        'Linear regression' : linear_regressor,
+        'Decision tree' : decision_tree_regressor,
+        'Random forest' : random_forest_regressor,
+        'XGBoost' : xgboost_regressor
+    }
+    model.compare_models(models, X_train, y_train, X_test, y_test, y_scaler)
 
 if __name__ == "__main__":
     main()
