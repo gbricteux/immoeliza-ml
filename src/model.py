@@ -195,8 +195,8 @@ def compare_models(models : dict, X_train : np.ndarray, y_train : np.ndarray,
             'Model': name,
             'Train R²': round(model.score(X_train, y_train), 4),
             'Test R²':  round(r2_score(y_test, y_pred), 4),
-            'Test RMSE': round(np.sqrt(mean_squared_error(y_test, y_pred)), 2),
-            'Test MAE':  round(mean_absolute_error(y_test, y_pred), 2),
+            'Test RMSE': round(np.sqrt(mean_squared_error(y_test, y_pred))),
+            'Test MAE':  round(mean_absolute_error(y_test, y_pred)),
         })
 
     results_df = pd.DataFrame(results).set_index('Model')

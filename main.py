@@ -16,7 +16,7 @@ def main():
     # Load data
     filename_sale = "./data/SaleCleanForAnalysis.csv"
     df = pd.read_csv(filename_sale)
-    df = df.reset_index()
+    df = df.reset_index(drop=True)
 
     print(f"Shape: {df.shape[0]} rows × {df.shape[1]} columns\n")
 
@@ -53,7 +53,7 @@ def main():
     df = preprocess.drop_columns(df, cols_to_drop)
 
     # Handle missing values
-    df = preprocess.fill_missing_values(df)
+    df = preprocess.fill_missing_values(df, boolean_cols)
 
     # Encode categorical features
     cols_to_one_hot_encode = ['transaction_type', 'property_type', 'property_subtype',

@@ -53,7 +53,7 @@ def drop_columns(df : pd.DataFrame, cols : list[str]) -> pd.DataFrame :
     df = df.drop(columns=cols_present)
     return df
 
-def fill_missing_values(df : pd.DataFrame) -> pd.DataFrame :
+def fill_missing_values(df : pd.DataFrame, bool_cols : list[str]) -> pd.DataFrame :
     '''
     Fill missing values in dataframe in columns cols
     '''
@@ -71,11 +71,9 @@ def fill_missing_values(df : pd.DataFrame) -> pd.DataFrame :
         value = int(median) if df[col].dtype == 'Int64' else median
         df[col] = df[col].fillna(value)
 
-    # Fill boolean values with False
-    df_boolean = df.select_dtypes(include='bool')
-    cols_present = df_boolean.columns
-    for col in cols_present:
-        df[col] = df[col].fillna('False')
+    # Fill boolean missing values with 0
+    for col in df[bool_cols]:
+        df[col] = df[col].fillna(0)
 
     # improvement : garden,garage,terrasse : could be filled depending on property_type
     # use kNN to improve filling
