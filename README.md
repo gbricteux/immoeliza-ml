@@ -42,6 +42,19 @@ The machine learning model does several steps :
 
 3. The script reads the real estate properties from the data file *data/SaleCleanForAnalysis.csv*. It preprocesses the data and splits the data in train and test subsets. The model is then computed on the train part and evaluated on the test part.
 
+## Results
+
+Four different machine learning models have been implemented (Linear regression, Decision tree, Random Forest and XGBoost). Their performance have been measured using several metrics (R² on train and test data, mean square error RMSE and mean absolute error MAE) to evaluate the precision of the prediction on the price of the test properties.
+
+The results on the input data set produces the following metrics : 
+
+| LM model            | Train R² | Test R² | Test RMSE | Test MAE |
+| --------            | --------:| -------:| ---------:| --------:|
+| Linear regression   | 0.594    | 0.579   | 201755    | 109525   |
+| Decision tree       | 0.723    | 0.518   | 215960    | 114679   |
+| Random forest       | 0.963    | 0.590   | 199231    | 91958    |
+| XGBoost             | 0.923    | 0.631   | 188766    | 87639    |
+
 ## ⏱️ Timeline
 
 This project took five days for completion.
