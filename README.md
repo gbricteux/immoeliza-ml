@@ -8,10 +8,21 @@ This project aims to create a machine learning model to predict the prize of rea
 The machine learning model does several steps :
 * preprocess the data for machine learning :  
   * fill missing values  
-  * encode categorical features  
-  * scale numerical features  
-* apply a machine learning model  
-* evaluate the performance of the model  
+    * categorical values -> Unknown  
+    * numerical values -> median  
+    * boolean values -> False  
+  * encode categorical features (using one-hot encoding)  
+  * split data between train and test subsets (80 % - 20 %)  
+  * scale numerical features (using standard scaling)   
+* apply machine learning models on train subset  
+  * Linear regression  
+  * Decision tree (with optimized depth)  
+  * Random forest (with optimized number of estimators)  
+  * XGBoost (with optimized learing rate)  
+* evaluate the performance of the model with different metrics  
+  * R-squared (R²) on train and test
+  * Root mean squared error (RMSE) on test
+  * Mean absolute error (MAE) on test   
 
 ## 📦 Repo structure
 
