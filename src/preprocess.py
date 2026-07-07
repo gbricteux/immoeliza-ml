@@ -11,6 +11,10 @@ def explore_data(df : pd.DataFrame) -> None :
     for col in df.columns:
         nb_nul = df[col].isna().sum()
         print(f"col {col} : \t{nb_nul/len(df[col])*100:.2f} % null, type = {df[col].dtype}")
+        if len(df[col].unique()) < 20:
+            print(f"col {col} : \t{df[col].unique()}")
+        else:
+            print(f"col {col} : \t{df[col].min()} - {df[col].max()}")
 
     '''
     #   Column                Non-Null Count  Dtype   Cat
@@ -21,8 +25,8 @@ def explore_data(df : pd.DataFrame) -> None :
     3   price                 13500 non-null  int64   no
     4   property_type         13500 non-null  str     yes (2)
     5   property_subtype      13500 non-null  str     yes (15)
-    6   seller_id             13500 non-null  int64   no (955)
-    7   postal_code           13500 non-null  int64   no (932)
+    6   seller_id             13500 non-null  int64   -
+    7   postal_code           13500 non-null  int64   -
     8   date_of_construction  7779 non-null   float64 no
     9   property_condition    10102 non-null  str     yes (10)
     10  livable_surface       12479 non-null  float64 no
@@ -80,18 +84,18 @@ def fill_missing_values(df : pd.DataFrame, bool_cols : list[str]) -> pd.DataFram
 
     return df
 
-def one_hot_encode(df : pd.DataFrame, cols : list[str]) -> pd.DataFrame:
+def one_hot_encode(df : pd.DataFrame, cols : list[str]) -> list:
     '''
     Encode columns with one-hot encoding, add them to df and remove original column
+    Return list with encoded dataframe df and encoder 
     '''
     cols_present = [c for c in cols if c in df.columns]
-    for col in cols_present:
-        encoder = OneHotEncoder(drop = "first", sparse_output = False)
-        encoder.set_output(transform="pandas")
-        col_encoded = pd.DataFrame(encoder.fit_transform(df[[col]]))
-        df = pd.merge(df, col_encoded, left_index = True, right_index = True)
-        df = df.drop(columns = [col])
-    return df
+    encoder = OneHotEncoder(drop = "first", sparse_output = False)
+    encoder.set_output(transform = "pandas")
+    cols_encoded = pd.DataFrame(encoder.fit_transform(df[cols_present]))
+    df = pd.merge(df, cols_encoded, left_index = True, right_index = True)
+    df = df.drop(columns = cols_present)
+    return [df, encoder]
 
 def remove_outliers(y : np.ndarray, X : np.ndarray, 
                     percent : float = 0.02) -> list[np.ndarray] :
@@ -115,7 +119,7 @@ def scale_data(array_train : np.ndarray, array_test : np.ndarray, cols : list[st
                df : pd.DataFrame, method : str) -> list :
     '''
     Scale data with scaler in columns of array corresponding to columns col of dataframe df
-    Returns list of scaled input arrays and last scaler
+    Returns list of scaled input arrays and scaler
     '''
     # Convert arrays to float
     array_train = array_train.astype(np.float64, copy = False)
@@ -131,14 +135,12 @@ def scale_data(array_train : np.ndarray, array_test : np.ndarray, cols : list[st
     # Create Scaler
     scaler = MinMaxScaler() if method == "minmax" else StandardScaler()
     # Fit scaler on train and transform both train and test
-    for col in array_cols:
-        # Reshape arrays to 2 dimensions arrays
-        array_train_2d = array_train[:,col].reshape(-1,1)
-        array_test_2d = array_test[:,col].reshape(-1,1)
-        # Computes the scaler parameters
-        scaler.fit(array_train_2d)
-        # Scale the train and test arrays and copies to initial arrays
-        array_train[:,col] = scaler.transform(array_train_2d)[:,0]
-        array_test[:,col] = scaler.transform(array_test_2d)[:,0]
+    array_train_sub = array_train[:,array_cols]
+    array_test_sub = array_test[:,array_cols]
+    # Computes the scaler parameters
+    scaler.fit(array_train_sub)
+    # Scale the train and test arrays and copies to initial arrays
+    array_train[:,array_cols] = scaler.transform(array_train_sub)
+    array_test[:,array_cols] = scaler.transform(array_test_sub)
 
     return [array_train, array_test, scaler]

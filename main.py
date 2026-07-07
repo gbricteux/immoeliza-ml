@@ -4,6 +4,7 @@ import warnings
 # Data manipulation & visualisation
 import numpy as np
 import pandas as pd
+import joblib
 
 from src import preprocess, model
 
@@ -58,7 +59,8 @@ def main():
     # Encode categorical features
     cols_to_one_hot_encode = ['transaction_type', 'property_type', 'property_subtype',
                               'property_condition', 'availability', 'province']
-    df = preprocess.one_hot_encode(df, cols_to_one_hot_encode)
+    df, one_hot_encoder = preprocess.one_hot_encode(df, cols_to_one_hot_encode)
+    joblib.dump(one_hot_encoder, "models/one_hot_encoder.pkl")
 
     # Split data into training and test sets.
     X = df.drop(columns=['price'])
@@ -74,7 +76,8 @@ def main():
                      'land_surface', 'energy_consumption', 'garden']
     X_train, X_test, x_scaler = preprocess.scale_data(X_train, X_test, cols_to_scale, X, "standard")
     y_train, y_test, y_scaler = preprocess.scale_data(y_train, y_test, ['price'], y, "standard")
-    
+    joblib.dump(x_scaler, "models/x_scaler.pkl")
+
     # Create and train machine learning models
     linear_regressor = model.linear_regression(X_train, y_train)
     decision_tree_regressor = model.decision_tree_regression(X_train, y_train, 
@@ -84,6 +87,10 @@ def main():
     xgboost_regressor = model.xgboost_regression(X_train, y_train, 
                                                  X_test, y_test, test_learning_rate = True)
     
+    # Save models in pkl files
+    joblib.dump(linear_regressor, "models/linear_regressor.pkl")
+    joblib.dump(xgboost_regressor, "models/xgboost_regressor.pkl")
+    
     # Test and compare models on test data
     models = {
         'Linear regression' : linear_regressor,
@@ -92,6 +99,14 @@ def main():
         'XGBoost' : xgboost_regressor
     }
     model.compare_models(models, X_train, y_train, X_test, y_test, y_scaler)
+
+    '''
+    Model                                                    
+    Linear regression     0.594    0.579     201755    109525
+    Decision tree         0.723    0.518     215960    114679
+    Random forest         0.963    0.590     199231     91958
+    XGBoost               0.923    0.631     188766     87639
+    '''
 
 if __name__ == "__main__":
     main()
