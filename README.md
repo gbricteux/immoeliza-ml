@@ -3,14 +3,14 @@
 
 ## 🏢 Description
 
-This project aims to create a machine learning model to predict the prize of real estate properties in Belgium. This is the third part of the Immo Eliza project for which we first scrapped the Immo Vlan properties, then analyzed and cleaned the data.
+This project aims to create a machine learning model to predict the prize of real estate properties in Belgium. This is the third part of the Immo Eliza project for which we first scrapped the Immo Vlan properties, then analyzed and cleaned the data.  
 
-The machine learning model does several steps :
+The machine learning model does several steps :  
 * preprocess the data for machine learning :  
   * fill missing values  
     * categorical values -> Unknown  
     * numerical values -> median  
-    * boolean values -> False  
+    * boolean values -> median  
   * encode categorical features (using one-hot encoding)  
   * split data between train and test subsets (80 % - 20 %)  
   * scale numerical features (using standard scaling)   
@@ -18,11 +18,11 @@ The machine learning model does several steps :
   * Linear regression  
   * Decision tree (with optimized depth)  
   * Random forest (with optimized number of estimators)  
-  * XGBoost (with optimized learing rate)  
+  * XGBoost (with optimized learning rate)  
 * evaluate the performance of the model with different metrics  
-  * R-squared (R²) on train and test
-  * Root mean squared error (RMSE) on test
-  * Mean absolute error (MAE) on test   
+  * R-squared (R²) on train and test  
+  * Root mean squared error (RMSE) on test  
+  * Mean absolute error (MAE) on test  
 
 ## 📦 Repo structure
 

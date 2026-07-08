@@ -54,7 +54,7 @@ def main():
     df = preprocess.drop_columns(df, cols_to_drop)
 
     # Handle missing values
-    df = preprocess.fill_missing_values(df, boolean_cols)
+    df = preprocess.fill_missing_values(df)
 
     # Encode categorical features
     cols_to_one_hot_encode = ['transaction_type', 'property_type', 'property_subtype',
@@ -77,6 +77,7 @@ def main():
     X_train, X_test, x_scaler = preprocess.scale_data(X_train, X_test, cols_to_scale, X, "standard")
     y_train, y_test, y_scaler = preprocess.scale_data(y_train, y_test, ['price'], y, "standard")
     joblib.dump(x_scaler, "models/x_scaler.pkl")
+    joblib.dump(y_scaler, "models/y_scaler.pkl")
 
     # Create and train machine learning models
     linear_regressor = model.linear_regression(X_train, y_train)
