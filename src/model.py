@@ -6,7 +6,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-from sklearn.preprocessing import OneHotEncoder, StandardScaler, MinMaxScaler
+from sklearn.model_selection import GridSearchCV
 from xgboost import XGBRegressor
 
 def split_data(X : pd.DataFrame, y : pd.DataFrame) -> list[np.ndarray] :
@@ -131,52 +131,78 @@ def random_forest_regression(X_train : np.ndarray, y_train : np.ndarray,
 def xgboost_regression(X_train : np.ndarray, y_train : np.ndarray,
                        X_test : np.ndarray, y_test : np.ndarray,
                        n_estimators_ : int = -1, learning_rate_ : float = 0,
-                       test_learning_rate : bool = False) -> XGBRegressor:
+                       optimize : str = "No") -> XGBRegressor:
     '''
-    Create and train XGBoost regression model. If test_learning_rate is set to True,
-    different number of learning rates are tested and the one that produces the best test 
-    R² score is chosen. 
-    A plot of the R² scores for train and test data for the different numbers of learning rates
-    is saved in file xgboost_scores.jpg
+    Create and train XGBoost regression model.
+    If optimize is set to "All", hyperparameter tuning is performed on n_estimators, 
+    learning_rates and max_depth to optimize R².
+    If optimize is set to "learning_rate", different number of learning rates are tested and 
+    the one that produces the best test R² score is chosen and a plot of the R² scores for train
+    and test data for the different numbers of learning rates is saved in file xgboost_scores.jpg.
+    If optimize is set to "No", input or default values for n_estimators and learning_rates are used.
     '''
+    
+    if optimize == "All":
+        param_grid = {
+            'n_estimators': [50, 100, 200],
+            'learning_rate': [0.001, 0.01, 0.05, 0.1, 0.2, 0.5, 1.0],
+            'max_depth': [4, 6, 10]
+        }
 
-    if not test_learning_rate :
-        learning_rate = learning_rate_ if learning_rate_ != 0 else 0.1
+        grid_search = GridSearchCV(
+            XGBRegressor(random_state = 42, verbosity = 0, early_stopping_rounds = 20),
+            param_grid,
+            cv = 5,
+            scoring = 'r2',
+            n_jobs = -1
+        )
+
+        grid_search.fit(X_train, y_train, eval_set=[(X_test, y_test)])
+
+        print(f"XGBoost : best params = {grid_search.best_params_}, R² score = "\
+            f"{grid_search.best_score_:.3f} (train), {grid_search.best_estimator_.score(X_test, y_test):.3f} (test)")
+        
+        return grid_search.best_estimator_
+
+    elif optimize == "learning_rates":
+        learning_rates = [0.001, 0.01, 0.05, 0.1, 0.2, 0.5, 1.0]
+        xgb_train_scores, xgb_test_scores = [], []
+
+        for lr in learning_rates:
+            model = XGBRegressor(n_estimators=200, learning_rate=lr, random_state=42, verbosity=0)
+            model.fit(X_train, y_train)
+            xgb_train_scores.append(model.score(X_train, y_train))
+            xgb_test_scores.append(model.score(X_test, y_test))
+
+        plt.figure(figsize=(9, 4))
+        plt.plot(learning_rates, xgb_train_scores, marker='o', label='Train R²', color='darkorange')
+        plt.plot(learning_rates, xgb_test_scores,  marker='o', label='Test R²',  color='tomato')
+        plt.xlabel('learning_rate')
+        plt.ylabel('R² Score')
+        plt.title('XGBoost: Effect of Learning Rate')
+        plt.xscale('log')
+        plt.legend()
+        plt.grid(True, linestyle='--', alpha=0.5)
+        plt.tight_layout()
+        plt.savefig("images/xgboost_scores.jpg")
+
+        learning_rate = learning_rates[xgb_test_scores.index(max(xgb_test_scores))]
         model = XGBRegressor(n_estimators = 100, learning_rate = learning_rate,
+                            random_state = 42, verbosity = 0)
+        model.fit(X_train, y_train)
+
+        print(f"XGBoost : best learning rate = {learning_rate}, R² score = "\
+            f"{model.score(X_train, y_train):.3f} (train), {model.score(X_test, y_test):.3f} (test)")
+        
+        return model
+    
+    else :
+        learning_rate = learning_rate_ if learning_rate_ != 0 else 0.1
+        n_estimators = n_estimators_ if n_estimators_ != -1 else 100
+        model = XGBRegressor(n_estimators = n_estimators, learning_rate = learning_rate,
                              random_state = 42, verbosity = 0)
         model.fit(X_train, y_train)
         return model
-    
-    learning_rates = [0.001, 0.01, 0.05, 0.1, 0.2, 0.5, 1.0]
-    xgb_train_scores, xgb_test_scores = [], []
-
-    for lr in learning_rates:
-        model = XGBRegressor(n_estimators=200, learning_rate=lr, random_state=42, verbosity=0)
-        model.fit(X_train, y_train)
-        xgb_train_scores.append(model.score(X_train, y_train))
-        xgb_test_scores.append(model.score(X_test, y_test))
-
-    plt.figure(figsize=(9, 4))
-    plt.plot(learning_rates, xgb_train_scores, marker='o', label='Train R²', color='darkorange')
-    plt.plot(learning_rates, xgb_test_scores,  marker='o', label='Test R²',  color='tomato')
-    plt.xlabel('learning_rate')
-    plt.ylabel('R² Score')
-    plt.title('XGBoost: Effect of Learning Rate')
-    plt.xscale('log')
-    plt.legend()
-    plt.grid(True, linestyle='--', alpha=0.5)
-    plt.tight_layout()
-    plt.savefig("images/xgboost_scores.jpg")
-
-    learning_rate = learning_rates[xgb_test_scores.index(max(xgb_test_scores))]
-    model = XGBRegressor(n_estimators = 100, learning_rate = learning_rate,
-                         random_state = 42, verbosity = 0)
-    model.fit(X_train, y_train)
-
-    print(f"XGBoost : best learning rate = {learning_rate}, R² score = "\
-          f"{model.score(X_train, y_train):.3f} (train), {model.score(X_test, y_test):.3f} (test)")
-    
-    return model
 
 def compare_models(models : dict, X_train : np.ndarray, y_train : np.ndarray,
                    X_test : np.ndarray, y_test : np.ndarray, y_scaler) -> None :

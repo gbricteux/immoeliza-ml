@@ -86,7 +86,7 @@ def main():
     random_forest_regressor = model.random_forest_regression(X_train, y_train, 
                                                              X_test, y_test, test_ntrees = True)
     xgboost_regressor = model.xgboost_regression(X_train, y_train, 
-                                                 X_test, y_test, test_learning_rate = True)
+                                                 X_test, y_test, optimize = "learning_rates")
     
     # Save models in pkl files
     joblib.dump(linear_regressor, "models/linear_regressor.pkl")
